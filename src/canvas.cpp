@@ -79,6 +79,7 @@ void canvashdl::resize(int w, int h)
 void canvashdl::set_matrix(matrix_id matid)
 {
     // TODO Assignment 1: Change which matrix is active.
+    active_matrix = matid;
 }
 
 /* load_identity
@@ -89,6 +90,7 @@ void canvashdl::set_matrix(matrix_id matid)
 void canvashdl::load_identity()
 {
     // TODO Assignment 1: Set the active matrix to the identity matrix.
+    matrices[active_matrix] = identity<float, 4, 4>();
 }
 
 /* rotate
@@ -99,6 +101,27 @@ void canvashdl::load_identity()
 void canvashdl::rotate(float angle, vec3f axis)
 {
     // TODO Assignment 1: Multiply the active matrix by a rotation matrix.
+    if (mag(axis) != 1)
+        axis = norm(axis);
+    
+    mat4f rotation_matrix = identity<float, 4, 4>();
+    float sin_val = sin(degtorad(angle));
+    float cos_val = cos(degtorad(angle));
+    float a = axis[0];
+    float b = axis[1];
+    float c = axis[2];
+    
+    rotation_matrix[0][0] = a*a*(1-cos_val)+cos_val;
+    rotation_matrix[0][1] = a*b*(1-cos_val)-c*sin_val;
+    rotation_matrix[0][2] = a*c*(1-cos_val)+b*sin_val;
+    rotation_matrix[1][0] = a*b*(1-cos_val)+c*sin_val;
+    rotation_matrix[1][1] = b*b*(1-cos_val)+cos_val;
+    rotation_matrix[1][2] = c*b*(1-cos_val)-a*sin_val;
+    rotation_matrix[2][0] = a*c*(1-cos_val)-b*sin_val;
+    rotation_matrix[2][1] = c*b*(1-cos_val)+a*sin_val;
+    rotation_matrix[2][2] = c*c*(1-cos_val)+cos_val;
+    
+    matrices[active_matrix] = rotation_matrix*matrices[active_matrix];
 }
 
 /* translate
@@ -109,6 +132,11 @@ void canvashdl::rotate(float angle, vec3f axis)
 void canvashdl::translate(vec3f direction)
 {
     // TODO Assignment 1: Multiply the active matrix by a translation matrix.
+    
+    mat4f translation_matrix = identity<float, 4, 4>();
+    vec4f direction2 = homogenize(direction);
+    translation_matrix.set_col(3, direction2);
+    matrices[active_matrix] = translation_matrix*matrices[active_matrix];
 }
 
 /* scale
@@ -119,6 +147,13 @@ void canvashdl::translate(vec3f direction)
 void canvashdl::scale(vec3f size)
 {
     // TODO Assignment 1: Multiply the active matrix by a scaling matrix.
+    mat4f scaling_matrix = identity<float, 4, 4>();
+    for (int i = 0; i < 3; ++i)
+    {
+        scaling_matrix[i][i] = size[i];
+    }
+    matrices[active_matrix] = scaling_matrix*matrices[active_matrix];
+    
 }
 
 /* perspective
@@ -126,9 +161,21 @@ void canvashdl::scale(vec3f size)
  * Multiply the active matrix by a perspective projection matrix.
  * This implements: https://www.opengl.org/sdk/docs/man2/xhtml/gluPerspective.xml
  */
-void canvashdl::perspective(float fovy, float aspect, float n, float f)
+void canvashdl::perspective(float fovy, float aspect, float nearVal, float farVal)
 {
     // TODO Assignment 1: Multiply the active matrix by a perspective projection matrix.
+    
+    mat4f perspective_matrix = identity<float, 4, 4>();
+    float f = 1/tan(degtorad(fovy/2));
+    
+    perspective_matrix[0][0] = f/aspect;
+    perspective_matrix[1][1] = f;
+    perspective_matrix[2][2] = (nearVal+farVal)/(nearVal-farVal);
+    perspective_matrix[2][3] = (2*nearVal*farVal)/(nearVal-farVal);
+    perspective_matrix[3][2] = -1;
+    perspective_matrix[3][3] = 0;
+    matrices[active_matrix] = perspective_matrix*matrices[active_matrix];
+    
 }
 
 /* frustum
@@ -136,9 +183,20 @@ void canvashdl::perspective(float fovy, float aspect, float n, float f)
  * Multiply the active matrix by a frustum projection matrix.
  * This implements: https://www.opengl.org/sdk/docs/man2/xhtml/glFrustum.xml
  */
-void canvashdl::frustum(float l, float r, float b, float t, float n, float f)
+void canvashdl::frustum(float left, float right, float bottom, float top, float nearVal, float farVal)
 {
     // TODO Assignment 1: Multiply the active matrix by a frustum projection matrix.
+    mat4f frustum_matrix = identity<float, 4, 4>();
+    
+    frustum_matrix[0][0] = (2*nearVal)/(right-left);
+    frustum_matrix[0][2] = (right+left)/(right-left);
+    frustum_matrix[1][1] = (2*nearVal)/(top-bottom);
+    frustum_matrix[1][2] = (top+bottom)/(top-bottom);
+    frustum_matrix[2][2] = -(farVal+nearVal)/(farVal-nearVal);
+    frustum_matrix[2][3] = -(2*farVal*nearVal)/(farVal-nearVal);
+    frustum_matrix[3][2] = -1;
+    frustum_matrix[3][3] = 0;
+    matrices[active_matrix] = frustum_matrix*matrices[active_matrix];
 }
 
 /* ortho
@@ -146,9 +204,29 @@ void canvashdl::frustum(float l, float r, float b, float t, float n, float f)
  * Multiply the active matrix by an orthographic projection matrix.
  * This implements: https://www.opengl.org/sdk/docs/man2/xhtml/glOrtho.xml
  */
-void canvashdl::ortho(float l, float r, float b, float t, float n, float f)
+void canvashdl::ortho(float left, float right, float bottom, float top, float nearVal, float farVal)
 {
     // TODO Assignment 1: Multiply the active matrix by an orthographic projection matrix.
+    
+    //The strategy to transform a glOrtho()-defined viewing box into the canonical box is straightforward:
+    //Translate the viewing box so that its center coincides with that of the canonical one, then scale
+    //its sides so that the match those of the canonical box.
+    
+    //The center of the viewing box defined by a call to glOrtho() is:
+    //[(r+l)/2, (t+b)/2, -(f+n)/2]. Therefore:
+    vec3f displacement_vector(-(right+left)/2, -(top+bottom)/2, (farVal+nearVal)/2);
+    translate(displacement_vector);
+    
+    //Since the viewing box is of size (r-l) x (t-b) x (f-n), while the canonical box is of size 2 x 2 x 2
+    //the scaling transformation matching the size of the former with those of the latter is:
+    vec3f scaling_vector(2/(right-left), 2/(top-bottom), 2/(farVal-nearVal));
+    scale(scaling_vector);
+    
+    //Finally, to account for the reversal in direction of the lines of sight, the needed transformation
+    //is (x,y,z) -> (x,y,-z):
+    vec3f scaling_vector2(1,1,-1);
+    scale(scaling_vector2);
+    
 }
 
 /* look_at
@@ -162,6 +240,15 @@ void canvashdl::look_at(vec3f eye, vec3f at, vec3f up)
     // TODO Assignment 1: Emulate the functionality of gluLookAt
 }
 
+/* change_scale
+ *
+ * Changes the scale of a given value.
+ */
+float canvashdl::change_scale(float current_val, float current_min, float current_max, float final_min, float final_max)
+{
+    return (((final_max-final_min)*(current_val-current_min))/(current_max-current_min))+final_min;
+}
+
 /* to_window
  *
  * Pixel coordinates to window coordinates.
@@ -171,7 +258,11 @@ vec3f canvashdl::to_window(vec2i pixel)
     /* TODO Assignment 1: Given a pixel coordinate (x from 0 to width and y from 0 to height),
      * convert it into window coordinates (x from -1 to 1 and y from -1 to 1).
      */
-    return vec3f();
+    float x = change_scale(pixel[0], 0, width, -1, 1);
+    float y = change_scale(pixel[1], 0, height, -1, 1);
+    vec3f result(x,y);
+    result[2] = 1;
+    return result;
 }
 
 /* unproject
@@ -192,6 +283,8 @@ vec3f canvashdl::unproject(vec3f window)
 vec8f canvashdl::shade_vertex(vec8f v)
 {
     // TODO Assignment 1: Do all of the necessary transformations (normal, projection, modelview, etc)
+    
+    // v8f = x,y,z, normal_z, normal_y, normal_z, u, v -> we split it into 4 x,y,z,w and apply the transforms, we dont care about the rest for now. (we keep them the same)
     
     // TODO Assignment 2: Implement Flat and Gouraud shading.
     return vec8f();
