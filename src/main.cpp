@@ -6,10 +6,15 @@
 #include "model.h"
 #include "primitive.h"
 #include "tinyfiledialogs.h"
+#include <iostream>
 
 int window_id;
 
+
+//Creates a static canvashdl 
 canvashdl canvas(750, 750);
+
+//Creates a scenehdl object named scene using the default constructor
 scenehdl scene;
 
 int mousex = 0, mousey = 0;
@@ -35,16 +40,24 @@ namespace manipulate
 
 manipulate::type manipulator;
 
-bool keys[256];
 
+bool keys[256];
 void init(string working_directory)
 {
-	for (int i = 0; i < 256; i++)
-		keys[i] = false;
-
+    for (int i = 0; i < 256; i++)
+        keys[i] = false;
+    
     canvas.working_directory = working_directory;
-	scene.canvas = &canvas;
-	// TODO Assignment 1: Initialize the Scene as necessary.
+    
+    // TODO Assignment 1: Initialize the Scene as necessary.
+    scene.canvas = &canvas;
+    
+    //Indicate the type of camera
+    scenehdl::camera_type cam_type = scenehdl::ortho;
+    
+    //Create the camera
+    scene.create_camera(cam_type);
+    
 }
 
 void displayfunc()
@@ -52,8 +65,9 @@ void displayfunc()
 	canvas.clear_color_buffer();
 
 	scene.draw();
-
+    
 	canvas.swap_buffers();
+    
 }
 
 void reshapefunc(int w, int h)
@@ -69,7 +83,7 @@ void pmotionfunc(int x, int y)
 		int deltax = x - mousex;
 		int deltay = y - mousey;
 
-		mousex = x;
+        mousex = x;
 		mousey = y;
 
 		bool warp = false;
@@ -210,46 +224,52 @@ void create_menu()
     glutMenuStatusFunc(menustatusfunc);
 }
 
+
+
 int main(int argc, char **argv)
 {
-	glutInit(&argc, argv);
-    int display_mode = GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE;
-#ifdef OSX_CORE3
-    display_mode |= GLUT_3_2_CORE_PROFILE;
-#endif
-	glutInitDisplayMode(display_mode);
-	
-	glutInitWindowSize(750, 750);
-	glutInitWindowPosition(0, 0);
-	window_id = glutCreateWindow("Assignment");
-
-#ifdef __GLEW_H__
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		cerr << "Error: " << glewGetErrorString(err) << endl;
-		exit(1);
-	}
-	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
-#endif
+    	glutInit(&argc, argv);
+        int display_mode = GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE;
+    #ifdef OSX_CORE3
+        display_mode |= GLUT_3_2_CORE_PROFILE;
+    #endif
     
-	cout << "Status: Using OpenGL " << glGetString(GL_VERSION) << endl;
-	cout << "Status: Using GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+    	glutInitDisplayMode(display_mode);
+    
+    	glutInitWindowSize(750, 750);
+    	glutInitWindowPosition(0, 0);
+    	window_id = glutCreateWindow("Assignment");
+    
+    #ifdef __GLEW_H__
+    	GLenum err = glewInit();
+    	if (GLEW_OK != err)
+    	{
+    		cerr << "Error: " << glewGetErrorString(err) << endl;
+    		exit(1);
+    	}
+    	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+    #endif
+    
+    	cout << "Status: Using OpenGL " << glGetString(GL_VERSION) << endl;
+    	cout << "Status: Using GLSL " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+    
+    
+        init(string(argv[0]).substr(0, string(argv[0]).find_last_of("/\\")) + "/");
+    	create_menu();
+    
+    	glutReshapeFunc(reshapefunc);
+    	glutDisplayFunc(displayfunc);
+    	glutIdleFunc(idlefunc);
+    
+    	glutPassiveMotionFunc(pmotionfunc);
+    	glutMotionFunc(motionfunc);
+    	glutMouseFunc(mousefunc);
+    
+    	glutKeyboardFunc(keydownfunc);
+    	glutKeyboardUpFunc(keyupfunc);
+    
+    	glutMainLoop();
 
     
-    init(string(argv[0]).substr(0, string(argv[0]).find_last_of("/\\")) + "/");
-	create_menu();
-
-	glutReshapeFunc(reshapefunc);
-	glutDisplayFunc(displayfunc);
-	glutIdleFunc(idlefunc);
-
-	glutPassiveMotionFunc(pmotionfunc);
-	glutMotionFunc(motionfunc);
-	glutMouseFunc(mousefunc);
-
-	glutKeyboardFunc(keydownfunc);
-	glutKeyboardUpFunc(keyupfunc);
-
-	glutMainLoop();
+    return 0;
 }

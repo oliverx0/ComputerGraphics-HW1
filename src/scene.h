@@ -25,6 +25,15 @@ struct scenehdl
 		face = 1,
 		vertex = 2
 	} render_normals;
+    
+    // Camera types
+    enum camera_type
+    {
+        ortho = 0,
+        frustum = 1,
+        perspective = 2
+        
+    };
 
 	// Whether or not to render the lights or the cameras or both
 	bool render_cameras;
@@ -34,7 +43,7 @@ struct scenehdl
 	bool active_camera_valid();
 	bool active_object_valid();
 
-	void create_camera();
+	void create_camera(camera_type cam);
 
 };
 
