@@ -11,7 +11,7 @@
 int window_id;
 
 
-//Creates a static canvashdl object named canvas (if using new it is dynamic)
+//Creates a static canvashdl 
 canvashdl canvas(750, 750);
 
 //Creates a scenehdl object named scene using the default constructor
@@ -48,8 +48,16 @@ void init(string working_directory)
         keys[i] = false;
     
     canvas.working_directory = working_directory;
-    scene.canvas = &canvas;
+    
     // TODO Assignment 1: Initialize the Scene as necessary.
+    scene.canvas = &canvas;
+    
+    //Indicate the type of camera
+    scenehdl::camera_type cam_type = scenehdl::ortho;
+    
+    //Create the camera
+    scene.create_camera(cam_type);
+    
 }
 
 void displayfunc()
@@ -59,7 +67,6 @@ void displayfunc()
 	scene.draw();
     
 	canvas.swap_buffers();
-    
     
 }
 

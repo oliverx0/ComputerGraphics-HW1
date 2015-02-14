@@ -33,6 +33,6 @@ namespace core
 	const vec3f indigo(0.2941, 0.0, 0.5098);
 	const vec3f violet(0.9333, 0.5098, 0.9333);
 	const vec3f black(0.0, 0.0, 0.0);
-	const vec3f white(1.0, 1.0, 1.0);
+	const vec3f white(255.0, 255.0, 255.0);
 	const vec3f brown(0.6471, 0.1647, 0.1647);
 }

@@ -300,6 +300,23 @@ vec3f canvashdl::to_window(vec2i pixel)
     return result;
 }
 
+/* to_pixel
+ *
+ * Window coordinates to pixel coordinates.
+ */
+vec2i canvashdl::to_pixel(vec3f window)
+{ 
+    /* TODO Assignment 1: Given a pixel coordinate (x from 0 to width and y from 0 to height),
+     * convert it into window coordinates (x from -1 to 1 and y from -1 to 1).
+     */
+    int x = change_scale(window[0], -1, 1, 0, width);
+    int y = change_scale(window[1], -1, 1, 0, height);
+    vec2i result(x,y);
+    return result;
+}
+
+
+
 /* unproject
  *
  * Unproject a window coordinate into world coordinates.
@@ -368,12 +385,13 @@ void canvashdl::plot(vec2i xy, vec8f v)
 {
     // TODO Assignment 1: Plot a pixel, calling the fragment shader.
     vec3f color = shade_fragment(v);
+    cout << color;
     int x = xy[0];
     int y = xy[1];
     
-    color_buffer[(y*(width*3))+x ]=color[0];
-    color_buffer[(y*(width*3))+x+1]=color[1];
-    color_buffer[(y*(width*3))+x+2]=color[2];
+    color_buffer[3*(width*y+x)]=color[0];
+    color_buffer[3*(width*y+x)+1]=color[1];
+    color_buffer[3*(width*y+x)+2]=color[2];
     
     // TODO Assignment 2: Check the pixel depth against the depth buffer.
 }
@@ -385,6 +403,10 @@ void canvashdl::plot(vec2i xy, vec8f v)
 void canvashdl::plot_point(vec8f v)
 {
     // TODO Assignment 1: Plot a point given in window coordinates.
+    vec3f window_coordinates(v[0], v[1], v[2]);
+    vec2i xy = to_pixel(window_coordinates);
+    cout << xy << endl;
+    plot(xy, v);
 }
 
 /* plot_line
@@ -422,6 +444,8 @@ void canvashdl::plot_triangle(vec8f v1, vec8f v2, vec8f v3)
      * triangle as 3 points or 3 lines.
      */
     
+    
+    
     // TODO Assignment 2: Add in the fill polygon mode.
 }
 
@@ -434,8 +458,11 @@ void canvashdl::draw_points(const vector<vec8f> &geometry)
 {
     // TODO Assignment 1: Clip the points against the frustum, call the vertex shader, and then draw them.
     
-    vec2i xy(10,10);
-    plot(xy, vec8f());
+    for(int i = 0; i < geometry.size(); ++i)
+    {
+        vec8f point = shade_vertex(geometry[i]);
+        plot_point(point);
+    }
 }
 
 /* Draw a set of 3D lines on the canvas. Each point in geometry
@@ -458,6 +485,11 @@ void canvashdl::draw_triangles(const vector<vec8f> &geometry, const vector<int> 
      * break the resulting polygons back into triangles, implement front and back face
      * culling, and then draw the remaining triangles.
      */
+    
+    
+    
+    
+
 }
 
 

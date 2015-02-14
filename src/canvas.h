@@ -80,8 +80,9 @@ public:
     void ortho(float l, float r, float b, float t, float n, float f);
     void look_at(vec3f eye, vec3f at, vec3f up);
     vec3f to_window(vec2i pixel);
+    vec2i to_pixel(vec3f window);
     vec3f unproject(vec3f window);
-    
+      
     // Drawing and Shading
     enum
     {
