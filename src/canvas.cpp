@@ -1,5 +1,6 @@
 #include "canvas.h"
 #include "core/geometry.h"
+#include "core/color.h"
 
 canvashdl::canvashdl(int w, int h)
 {
@@ -238,6 +239,40 @@ void canvashdl::ortho(float left, float right, float bottom, float top, float ne
 void canvashdl::look_at(vec3f eye, vec3f at, vec3f up)
 {
     // TODO Assignment 1: Emulate the functionality of gluLookAt
+    
+    //Matrix M
+    mat4f M = identity<float, 4, 4>();
+    
+    //Line of sight vector
+    vec3f los = eye - at;
+    
+    //Normalize line of sight and up vectors
+    los = norm(los);
+    up = norm(up);
+    
+    //Calculate vector perpendicular to line of sight and up
+    vec3f s = cross(los, up);
+    s = norm(s);
+    
+    //Recompute up vector, NOT SURE WHY!
+    up = cross(los, up);
+    
+    //Calculate M matrix
+    M[0][0] = s[0];
+    M[0][1] = s[1];
+    M[0][2] = s[2];
+    M[1][0] = up[0];
+    M[1][1] = up[1];
+    M[1][2] = up[2];
+    M[2][0] = -los[0];
+    M[2][1] = -los[1];
+    M[2][2] = -los[2];
+    
+    matrices[active_matrix] = M*matrices[active_matrix];
+    
+    //Translate the camera to -at
+    translate(-at);
+    
 }
 
 /* change_scale
@@ -273,7 +308,19 @@ vec3f canvashdl::to_window(vec2i pixel)
 vec3f canvashdl::unproject(vec3f window)
 {
     // TODO Assignment 1: Unproject a window coordinate into world coordinates.
-    return vec3f();
+    
+    vec4f window_coords = homogenize(window);
+    window_coords[0] = (2*(window[0]-reshape_width)/width)-1;
+    window_coords[1] = (2*(window[1]-reshape_height)/width)+1;
+    window_coords[3] = 2*window[2] - 1;
+    
+    mat4f M = matrices[projection_matrix]*matrices[modelview_matrix];
+    M = inverse(M);
+    window_coords = M*window_coords;
+    
+    vec3f final_result(window_coords[0], window_coords[1], window_coords[3]);
+    
+    return final_result;
 }
 
 /* shade_vertex
@@ -286,8 +333,17 @@ vec8f canvashdl::shade_vertex(vec8f v)
     
     // v8f = x,y,z, normal_z, normal_y, normal_z, u, v -> we split it into 4 x,y,z,w and apply the transforms, we dont care about the rest for now. (we keep them the same)
     
+    vec4f my_vector(v[0], v[1], v[2]);
+    my_vector[3] = 1;
+    mat4f M = matrices[projection_matrix]*matrices[modelview_matrix];
+    my_vector = M*my_vector;
+    
+    v[0] = my_vector[0];
+    v[1] = my_vector[1];
+    v[2] = my_vector[2];
+    
     // TODO Assignment 2: Implement Flat and Gouraud shading.
-    return vec8f();
+    return v;
 }
 
 /* shade_fragment
@@ -301,7 +357,7 @@ vec3f canvashdl::shade_fragment(vec8f v)
     /* TODO Assignment 2: Figure out the pixel color due to lighting and materials
      * and implement phong shading.
      */
-    return vec3f();
+    return white;
 }
 
 /* plot
@@ -311,6 +367,13 @@ vec3f canvashdl::shade_fragment(vec8f v)
 void canvashdl::plot(vec2i xy, vec8f v)
 {
     // TODO Assignment 1: Plot a pixel, calling the fragment shader.
+    vec3f color = shade_fragment(v);
+    int x = xy[0];
+    int y = xy[1];
+    
+    color_buffer[(y*(width*3))+x ]=color[0];
+    color_buffer[(y*(width*3))+x+1]=color[1];
+    color_buffer[(y*(width*3))+x+2]=color[2];
     
     // TODO Assignment 2: Check the pixel depth against the depth buffer.
 }
@@ -370,6 +433,9 @@ void canvashdl::plot_triangle(vec8f v1, vec8f v2, vec8f v3)
 void canvashdl::draw_points(const vector<vec8f> &geometry)
 {
     // TODO Assignment 1: Clip the points against the frustum, call the vertex shader, and then draw them.
+    
+    vec2i xy(10,10);
+    plot(xy, vec8f());
 }
 
 /* Draw a set of 3D lines on the canvas. Each point in geometry
