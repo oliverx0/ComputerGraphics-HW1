@@ -25,6 +25,8 @@ canvashdl::canvashdl(int w, int h)
     
     polygon_mode = line;
     culling = backface;
+    
+    cout << "Canvas Initialized.";
 }
 
 canvashdl::~canvashdl()
@@ -167,7 +169,8 @@ void canvashdl::perspective(float fovy, float aspect, float nearVal, float farVa
     // TODO Assignment 1: Multiply the active matrix by a perspective projection matrix.
     
     mat4f perspective_matrix = identity<float, 4, 4>();
-    float f = 1/tan(degtorad(fovy/2));
+   // float f = 1/tan(degtorad(fovy/2));
+    float f = 1/tan(fovy/2);
     
     perspective_matrix[0][0] = f/aspect;
     perspective_matrix[1][1] = f;
@@ -209,24 +212,15 @@ void canvashdl::ortho(float left, float right, float bottom, float top, float ne
 {
     // TODO Assignment 1: Multiply the active matrix by an orthographic projection matrix.
     
-    //The strategy to transform a glOrtho()-defined viewing box into the canonical box is straightforward:
-    //Translate the viewing box so that its center coincides with that of the canonical one, then scale
-    //its sides so that the match those of the canonical box.
+    mat4f ortho_matrix = identity<float, 4, 4>();
     
-    //The center of the viewing box defined by a call to glOrtho() is:
-    //[(r+l)/2, (t+b)/2, -(f+n)/2]. Therefore:
-    vec3f displacement_vector(-(right+left)/2, -(top+bottom)/2, (farVal+nearVal)/2);
-    translate(displacement_vector);
-    
-    //Since the viewing box is of size (r-l) x (t-b) x (f-n), while the canonical box is of size 2 x 2 x 2
-    //the scaling transformation matching the size of the former with those of the latter is:
-    vec3f scaling_vector(2/(right-left), 2/(top-bottom), 2/(farVal-nearVal));
-    scale(scaling_vector);
-    
-    //Finally, to account for the reversal in direction of the lines of sight, the needed transformation
-    //is (x,y,z) -> (x,y,-z):
-    vec3f scaling_vector2(1,1,-1);
-    scale(scaling_vector2);
+    ortho_matrix[0][0] = 2/(right-left);
+    ortho_matrix[1][1] = 2/(top-bottom);
+    ortho_matrix[2][2] = -2/(farVal-nearVal);
+    ortho_matrix[0][3] = -(right+left)/(right-left);
+    ortho_matrix[1][3] = -(top+bottom)/(top-bottom);
+    ortho_matrix[2][3] = -(farVal+nearVal)/(farVal-nearVal);
+    matrices[active_matrix] = ortho_matrix*matrices[active_matrix];
     
 }
 
@@ -371,27 +365,29 @@ vec3f canvashdl::shade_fragment(vec8f v)
 {
     // TODO Assignment 1: Pick a color, any color (as long as it is distinguishable from the background color).
     
+    return white;
+    
     /* TODO Assignment 2: Figure out the pixel color due to lighting and materials
      * and implement phong shading.
      */
-    return white;
+    
 }
 
 /* plot
  *
- * Plot a pixel.
+ * Plot a pixel given in screen coordinates.
  */
 void canvashdl::plot(vec2i xy, vec8f v)
 {
     // TODO Assignment 1: Plot a pixel, calling the fragment shader.
     vec3f color = shade_fragment(v);
-    cout << color;
     int x = xy[0];
     int y = xy[1];
     
-    color_buffer[3*(width*y+x)]=color[0];
-    color_buffer[3*(width*y+x)+1]=color[1];
-    color_buffer[3*(width*y+x)+2]=color[2];
+    for (int i = 0; i < 3; ++i)
+    {
+        color_buffer[3*(width*y+x)+i]=color[i];
+    }
     
     // TODO Assignment 2: Check the pixel depth against the depth buffer.
 }
@@ -403,10 +399,12 @@ void canvashdl::plot(vec2i xy, vec8f v)
 void canvashdl::plot_point(vec8f v)
 {
     // TODO Assignment 1: Plot a point given in window coordinates.
+    
+    //We then transform the window coordinates to pixel coordinates
     vec3f window_coordinates(v[0], v[1], v[2]);
-    vec2i xy = to_pixel(window_coordinates);
-    cout << xy << endl;
-    plot(xy, v);
+    vec2i pixel_coords = to_pixel(window_coordinates);
+    
+    plot(pixel_coords, v);
 }
 
 /* plot_line
@@ -416,6 +414,19 @@ void canvashdl::plot_point(vec8f v)
 void canvashdl::plot_line(vec8f v1, vec8f v2)
 {
     // TODO Assignment 1: Implement Bresenham's Algorithm.
+    vec3f window_coordinates(v1[0], v1[1], v1[2]);
+    vec2i xy = to_pixel(window_coordinates);
+    int i1 = xy[0];
+    int j1 = xy[1];
+    
+    vec3f window_coordinates2(v2[0], v2[1], v2[2]);
+    vec2i xy2 = to_pixel(window_coordinates2);
+    int i2 = xy2[0];
+    int j2 = xy2[1];
+    
+    
+    
+    
     
     // TODO Assignment 2: Add interpolation for the normals and texture coordinates as well.
 }
@@ -460,7 +471,10 @@ void canvashdl::draw_points(const vector<vec8f> &geometry)
     
     for(int i = 0; i < geometry.size(); ++i)
     {
+        //We receive the points in window coordinates and apply the transformations
         vec8f point = shade_vertex(geometry[i]);
+        
+        //Plot the point
         plot_point(point);
     }
 }

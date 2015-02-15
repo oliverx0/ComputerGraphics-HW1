@@ -8,11 +8,13 @@
 #include "tinyfiledialogs.h"
 #include <iostream>
 
+#define INIT_WIDTH 300
+#define INIT_HEIGHT 300
+
 int window_id;
 
-
 //Creates a static canvashdl 
-canvashdl canvas(750, 750);
+canvashdl canvas(INIT_WIDTH, INIT_HEIGHT);
 
 //Creates a scenehdl object named scene using the default constructor
 scenehdl scene;
@@ -53,7 +55,7 @@ void init(string working_directory)
     scene.canvas = &canvas;
     
     //Indicate the type of camera
-    scenehdl::camera_type cam_type = scenehdl::ortho;
+    scenehdl::camera_type cam_type = scenehdl::perspective;
     
     //Create the camera
     scene.create_camera(cam_type);
@@ -236,7 +238,7 @@ int main(int argc, char **argv)
     
     	glutInitDisplayMode(display_mode);
     
-    	glutInitWindowSize(750, 750);
+    	glutInitWindowSize(INIT_WIDTH, INIT_HEIGHT);
     	glutInitWindowPosition(0, 0);
     	window_id = glutCreateWindow("Assignment");
     

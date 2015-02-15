@@ -30,9 +30,18 @@ void scenehdl::draw()
 	 * if enabled, draw the normals and the cameras.
 	 */
     
-    vec8f geometry(1,1,1,1,1,1,1,1);
+    vec8f geometry;
+    geometry[0] = 0.02360;
+    geometry[1] = -0.08654;
+    geometry[2] = 0;
+    
+    vec8f geometry2(0,0,1,1,1,1,1,1);
+    
+    
     vector<vec8f>vec;
     vec.push_back(geometry);
+    vec.push_back(geometry2);
+    
     canvas->draw_points(vec);
     
     //Draw objects
@@ -58,7 +67,6 @@ void scenehdl::draw()
 
 void scenehdl::create_camera(camera_type cam_type)
 {
-    
     if(cam_type == ortho)
     {
         orthohdl camera;
