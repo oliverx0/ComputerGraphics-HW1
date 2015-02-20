@@ -31,8 +31,8 @@ void scenehdl::draw()
 	 */
     
     vec8f geometry;
-    geometry[0] = 0.02360;
-    geometry[1] = -0.08654;
+    geometry[0] = 1;
+    geometry[1] = -1;
     geometry[2] = 0;
     
     vec8f geometry2(0,0,1,1,1,1,1,1);
@@ -43,21 +43,6 @@ void scenehdl::draw()
     vec.push_back(geometry2);
     
     canvas->draw_points(vec);
-    
-    //Draw objects
-    for(int i = 0; i < objects.size(); i++)
-    {
-        objects[i]->draw(canvas);
-    }
-    
-    //Draw cameras
-    if(render_cameras)
-    {
-        for(int i = 0; i < cameras.size(); i++)
-        {
-            cameras[i]->model->draw(canvas);
-        }
-    }
     
     
 	/* TODO Assignment 2: Pass the lights to the shaders through canvashdl::uniform.
