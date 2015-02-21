@@ -305,6 +305,7 @@ vec2i canvashdl::to_pixel(vec3f window)
      */
     int x = change_scale(window[0], -1, 1, 0, width);
     int y = change_scale(window[1], -1, 1, 0, height);
+    cout << "(" << window[0] << "," << window[0] << ") to " << "(" << x << "," << y << ")" << endl;
     vec2i result(x,y);
     return result;
 }
@@ -425,13 +426,54 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     int y2 = xy2[1];
     
     // find the slope
-    
+    int dy = abs(y2-y1);
+    int dx = abs(x2-x1);
+    int s1 = sign(x2 - x1);
+    int s2 = sign(y2 - y1);
+    int x = x1;
+    int y = y1;
+    bool swap = false;
+    if (dy > dx) {
+        int temp = dx;
+        dx = dy;
+        dy = temp;
+        swap = true;
+    }
+    int D = 2*dy - dx;
+    for (int i = 0; i < dx; i++) {
+        vec2i point1(x,y);
+        
+        
+        plot(point1,v1);
+        while (D >= 0)
+        {
+            D = D - 2*dx;
+            if (swap)
+                x += s1;
+            else
+                y += s2;
+        }
+        D = D + 2*dy;
+        if (swap)
+            y += s2;
+        else
+            x += s1;
+    }
     
     
     
     // TODO Assignment 2: Add interpolation for the normals and texture coordinates as well.
 }
 
+int canvashdl::sign(int x){
+    if(x<0){
+        return -1;
+    }
+    else if(x>0){
+        return 1;
+    }
+    return 0;
+}
 /* plot_half_triangle
  *
  * Plot half of a triangle defined by three points in window coordinates (v1, v2, v3).
@@ -486,6 +528,15 @@ void canvashdl::draw_points(const vector<vec8f> &geometry)
 void canvashdl::draw_lines(const vector<vec8f> &geometry, const vector<int> &indices)
 {
     // TODO Assignment 1: Clip the lines against the frustum, call the vertex shader, and then draw them.
+    //for(int i = 0; i < geometry.size(); ++i)
+    //{
+        //We receive the points in window coordinates and apply the transformations
+        vec8f point1 = shade_vertex(geometry[0]);
+        vec8f point2 = shade_vertex(geometry[1]);
+    
+        //Plot the point
+        plot_line(point1, point2);
+    //}
 }
 
 /* Draw a set of 3D triangles on the canvas. Each point in geometry is

@@ -44,6 +44,7 @@ private:
     void plot_line(vec8f v1, vec8f v2);
     void plot_half_triangle(vec2i s1, vec2i s2, vec2i s3, vec8f v1, vec8f v2, vec8f v3, vec5f ave);
     void plot_triangle(vec8f v1, vec8f v2, vec8f v3);
+    int sign(int x);
     
 public:
     canvashdl(int w, int h);
