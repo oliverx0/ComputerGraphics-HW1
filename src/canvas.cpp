@@ -346,7 +346,7 @@ vec8f canvashdl::shade_vertex(vec8f v)
     
     vec4f my_vector(v[0], v[1], v[2]);
     my_vector[3] = 1;
-    mat4f M = matrices[projection_matrix]*matrices[modelview_matrix];
+    mat4f M = matrices[normal_matrix]*matrices[projection_matrix]*matrices[modelview_matrix];
     my_vector = M*my_vector;
     
     v[0] = my_vector[0];
