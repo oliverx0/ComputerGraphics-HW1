@@ -31,18 +31,23 @@ void scenehdl::draw()
 	 */
     
     vec8f geometry;
-    geometry[0] = 1;
-    geometry[1] = -1;
+    geometry[0] = 0;
+    geometry[1] = 0;
     geometry[2] = 0;
     
-    vec8f geometry2(0,0,1,1,1,1,1,1);
-    
+    vec8f geometry2(0,0.05,1,1,1,1,1,1);
+    geometry2[0] = 1;
+    geometry2[1] = 1;
+    geometry2[2] = 0;
+    //cout << geometry;
     
     vector<vec8f>vec;
+    vector<int>vec2;
     vec.push_back(geometry);
     vec.push_back(geometry2);
     
     canvas->draw_points(vec);
+    canvas->draw_lines(vec,vec2);
     
     
 	/* TODO Assignment 2: Pass the lights to the shaders through canvashdl::uniform.
