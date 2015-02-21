@@ -416,13 +416,13 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     // TODO Assignment 1: Implement Bresenham's Algorithm.
     vec3f window_coordinates(v1[0], v1[1], v1[2]);
     vec2i xy = to_pixel(window_coordinates);
-    int i1 = xy[0];
-    int j1 = xy[1];
+    int x1 = xy[0];
+    int y1 = xy[1];
     
     vec3f window_coordinates2(v2[0], v2[1], v2[2]);
     vec2i xy2 = to_pixel(window_coordinates2);
-    int i2 = xy2[0];
-    int j2 = xy2[1];
+    int x2 = xy2[0];
+    int y2 = xy2[1];
     
     // find the slope
     
