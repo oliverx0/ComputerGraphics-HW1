@@ -424,6 +424,7 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     int i2 = xy2[0];
     int j2 = xy2[1];
     
+    // find the slope
     
     
     
