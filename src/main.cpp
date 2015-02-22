@@ -8,8 +8,8 @@
 #include "tinyfiledialogs.h"
 #include <iostream>
 
-#define INIT_WIDTH 300
-#define INIT_HEIGHT 300
+#define INIT_WIDTH 600
+#define INIT_HEIGHT 600
 
 int window_id;
 

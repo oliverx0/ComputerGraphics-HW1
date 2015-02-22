@@ -1,6 +1,7 @@
 #include "canvas.h"
 #include "core/geometry.h"
 #include "core/color.h"
+#include "camera.h"
 
 canvashdl::canvashdl(int w, int h)
 {
@@ -415,6 +416,8 @@ void canvashdl::plot_point(vec8f v)
 void canvashdl::plot_line(vec8f v1, vec8f v2)
 {
     // TODO Assignment 1: Implement Bresenham's Algorithm.
+    
+    //Get the points in pixel coordinates
     vec3f window_coordinates(v1[0], v1[1], v1[2]);
     vec2i xy = to_pixel(window_coordinates);
     int x1 = xy[0];
@@ -528,6 +531,9 @@ void canvashdl::draw_points(const vector<vec8f> &geometry)
 void canvashdl::draw_lines(const vector<vec8f> &geometry, const vector<int> &indices)
 {
     // TODO Assignment 1: Clip the lines against the frustum, call the vertex shader, and then draw them.
+    frustumhdl test;
+    cout << test.back;
+    
     //for(int i = 0; i < geometry.size(); ++i)
     //{
         //We receive the points in window coordinates and apply the transformations
