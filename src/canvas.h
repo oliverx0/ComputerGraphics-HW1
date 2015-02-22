@@ -83,6 +83,7 @@ public:
     vec3f to_window(vec2i pixel);
     vec2i to_pixel(vec3f window);
     vec3f unproject(vec3f window);
+    bool clip_frustum(vec3f v);
       
     // Drawing and Shading
     enum

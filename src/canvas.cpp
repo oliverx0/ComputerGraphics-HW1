@@ -1,6 +1,7 @@
 #include "canvas.h"
 #include "core/geometry.h"
 #include "core/color.h"
+#include "camera.h"
 
 canvashdl::canvashdl(int w, int h)
 {
@@ -406,6 +407,8 @@ void canvashdl::plot_point(vec8f v)
     vec2i pixel_coords = to_pixel(window_coordinates);
     
     plot(pixel_coords, v);
+    
+
 }
 
 /* plot_line
@@ -442,9 +445,10 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     int D = 2*dy - dx;
     for (int i = 0; i < dx; i++) {
         vec2i point1(x,y);
-        
-        
-        plot(point1,v1);
+        vec3f point3f = to_window(point1);
+        if( clip_frustum(point3f) == true){
+            plot(point1,v1);
+        }
         while (D >= 0)
         {
             D = D - 2*dx;
@@ -464,6 +468,90 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     
     // TODO Assignment 2: Add interpolation for the normals and texture coordinates as well.
 }
+
+bool canvashdl::clip_frustum(vec3f v)
+{
+    mat4f clip_matrix = identity<float, 4, 4>();
+    clip_matrix = matrices[projection_matrix]*matrices[modelview_matrix];
+    mat4f frustum_matrix;
+    /* Extract the numbers for the RIGHT plane */
+    frustum_matrix[0][0] = clip_matrix[0][3] - clip_matrix[0][0];
+    frustum_matrix[0][1] = clip_matrix[1][3] - clip_matrix[1][0];
+    frustum_matrix[0][2] = clip_matrix[2][3] - clip_matrix[2][0];
+    frustum_matrix[0][3] = clip_matrix[3][3] - clip_matrix[3][0];
+    /* Normalize the result */
+    float t = sqrt( frustum_matrix[0][0] * frustum_matrix[0][0] + frustum_matrix[0][1] * frustum_matrix[0][1] + frustum_matrix[0][2]    * frustum_matrix[0][2] );
+    frustum_matrix[0][0] /= t;
+    frustum_matrix[0][1] /= t;
+    frustum_matrix[0][2] /= t;
+    frustum_matrix[0][3] /= t;
+    /* Extract the numbers for the LEFT plane */
+    frustum_matrix[1][0] = clip_matrix[0][3] + clip_matrix[0][0];
+    frustum_matrix[1][1] = clip_matrix[1][3] + clip_matrix[1][0];
+    frustum_matrix[1][2] = clip_matrix[2][3] + clip_matrix[2][0];
+    frustum_matrix[1][3] = clip_matrix[3][3] + clip_matrix[3][0];
+    /* Normalize the result */
+    t = sqrt( frustum_matrix[1][0] * frustum_matrix[1][0] + frustum_matrix[1][1] * frustum_matrix[1][1] + frustum_matrix[1][2]    * frustum_matrix[1][2] );
+    frustum_matrix[1][0] /= t;
+    frustum_matrix[1][1] /= t;
+    frustum_matrix[1][2] /= t;
+    frustum_matrix[1][3] /= t;
+    /* Extract the BOTTOM plane */
+    frustum_matrix[2][0] = clip_matrix[0][3] + clip_matrix[0][1];
+    frustum_matrix[2][1] = clip_matrix[1][3] + clip_matrix[1][1];
+    frustum_matrix[2][2] = clip_matrix[2][3] + clip_matrix[2][1];
+    frustum_matrix[2][3] = clip_matrix[3][3] + clip_matrix[3][1];
+    /* Normalize the result */
+    t = sqrt( frustum_matrix[2][0] * frustum_matrix[2][0] + frustum_matrix[2][1] * frustum_matrix[2][1] + frustum_matrix[2][2]    * frustum_matrix[2][2] );
+    frustum_matrix[2][0] /= t;
+    frustum_matrix[2][1] /= t;
+    frustum_matrix[2][2] /= t;
+    frustum_matrix[2][3] /= t;
+    /* Extract the TOP plane */
+    frustum_matrix[3][0] = clip_matrix[0][3] - clip_matrix[0][1];
+    frustum_matrix[3][1] = clip_matrix[1][3] - clip_matrix[1][1];
+    frustum_matrix[3][2] = clip_matrix[2][3] - clip_matrix[2][1];
+    frustum_matrix[3][3] = clip_matrix[3][3] - clip_matrix[3][1];
+    /* Normalize the result */
+    t = sqrt( frustum_matrix[3][0] * frustum_matrix[3][0] + frustum_matrix[3][1] * frustum_matrix[3][1] + frustum_matrix[3][2]    * frustum_matrix[3][2] );
+    frustum_matrix[3][0] /= t;
+    frustum_matrix[3][1] /= t;
+    frustum_matrix[3][2] /= t;
+    frustum_matrix[3][3] /= t;
+    /* Extract the FAR plane */
+    frustum_matrix[4][0] = clip_matrix[0][3] - clip_matrix[0][2];
+    frustum_matrix[4][1] = clip_matrix[1][3] - clip_matrix[1][2];
+    frustum_matrix[4][2] = clip_matrix[2][3] - clip_matrix[2][2];
+    frustum_matrix[4][3] = clip_matrix[3][3] - clip_matrix[3][2];
+    /* Normalize the result */
+    t = sqrt( frustum_matrix[4][0] * frustum_matrix[4][0] + frustum_matrix[4][1] * frustum_matrix[4][1] + frustum_matrix[4][2]    * frustum_matrix[4][2] );
+    frustum_matrix[4][0] /= t;
+    frustum_matrix[4][1] /= t;
+    frustum_matrix[4][2] /= t;
+    frustum_matrix[4][3] /= t;
+    /* Extract the NEAR plane */
+    frustum_matrix[5][0] = clip_matrix[0][3] + clip_matrix[0][2];
+    frustum_matrix[5][1] = clip_matrix[1][3] + clip_matrix[1][2];
+    frustum_matrix[5][2] = clip_matrix[2][3] + clip_matrix[2][2];
+    frustum_matrix[5][3] = clip_matrix[3][3] + clip_matrix[3][2];
+    /* Normalize the result */
+    t = sqrt( frustum_matrix[5][0] * frustum_matrix[5][0] + frustum_matrix[5][1] * frustum_matrix[5][1] + frustum_matrix[5][2]    * frustum_matrix[5][2] );
+    frustum_matrix[5][0] /= t;
+    frustum_matrix[5][1] /= t;
+    frustum_matrix[5][2] /= t;
+    frustum_matrix[5][3] /= t;
+    float x = v[0];
+    float y = v[1];
+    float z = v[2];
+    int p;
+    for( p = 0; p < 6; p++ )
+        if( frustum_matrix[p][0] * x + frustum_matrix[p][1] * y + frustum_matrix[p][2] * z + frustum_matrix[p][3]    <= 0 )
+            return false;
+    return true;
+    //return v;
+}
+
+
 
 int canvashdl::sign(int x){
     if(x<0){
@@ -533,7 +621,8 @@ void canvashdl::draw_lines(const vector<vec8f> &geometry, const vector<int> &ind
         //We receive the points in window coordinates and apply the transformations
         vec8f point1 = shade_vertex(geometry[0]);
         vec8f point2 = shade_vertex(geometry[1]);
-    
+        point1 = clip_frustum(point1);
+        point2 = clip_frustum(point2);
         //Plot the point
         plot_line(point1, point2);
     //}
