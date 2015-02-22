@@ -55,7 +55,7 @@ void init(string working_directory)
     scene.canvas = &canvas;
     
     //Indicate the type of camera
-    scenehdl::camera_type cam_type = scenehdl::perspective;
+    scenehdl::camera_type cam_type = scenehdl::frustum;
     
     //Create the camera
     scene.create_camera(cam_type);
