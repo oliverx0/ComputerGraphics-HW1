@@ -386,9 +386,18 @@ void canvashdl::plot(vec2i xy, vec8f v)
     int x = xy[0];
     int y = xy[1];
     
-    for (int i = 0; i < 3; ++i)
+    if ((x >= 0 && x < width) && (y >= 0 && y < height))
     {
-        color_buffer[3*(width*y+x)+i]=color[i];
+        for (int i = 0; i < 3; ++i)
+        {
+        
+            color_buffer[3*(width*y+x)+i]=color[i];
+        }
+    }
+    else
+    {
+        cout << "Error! Impossible value assigned to color buffer" << endl;
+        
     }
     
     // TODO Assignment 2: Check the pixel depth against the depth buffer.
@@ -438,19 +447,18 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     int x = x1;
     int y = y1;
     bool swap = false;
-    if (dy > dx) {
+    if (dy > dx)
+    {
         int temp = dx;
         dx = dy;
         dy = temp;
         swap = true;
     }
     int D = 2*dy - dx;
-    for (int i = 0; i < dx; i++) {
+    for (int i = 0; i < dx; i++)
+    {
         vec2i point1(x,y);
-        vec3f point3f = to_window(point1);
-        if( clip_frustum(point3f) == true){
-            plot(point1,v1);
-        }
+        plot(point1,v1);
         while (D >= 0)
         {
             D = D - 2*dx;
@@ -471,44 +479,64 @@ void canvashdl::plot_line(vec8f v1, vec8f v2)
     // TODO Assignment 2: Add interpolation for the normals and texture coordinates as well.
 }
 
-bool canvashdl::clip_frustum(vec3f v)
+int canvashdl::sign(int x){
+    if(x<0){
+        return -1;
+    }
+    else if(x>0){
+        return 1;
+    }
+    return 0;
+}
+
+mat4f canvashdl::clip_frustum()
 {
     mat4f clip_matrix = identity<float, 4, 4>();
     clip_matrix = matrices[projection_matrix]*matrices[modelview_matrix];
     mat4f frustum_matrix;
+    
     /* Extract the numbers for the RIGHT plane */
     frustum_matrix[0][0] = clip_matrix[0][3] - clip_matrix[0][0];
     frustum_matrix[0][1] = clip_matrix[1][3] - clip_matrix[1][0];
     frustum_matrix[0][2] = clip_matrix[2][3] - clip_matrix[2][0];
     frustum_matrix[0][3] = clip_matrix[3][3] - clip_matrix[3][0];
+    
     /* Normalize the result */
     float t = sqrt( frustum_matrix[0][0] * frustum_matrix[0][0] + frustum_matrix[0][1] * frustum_matrix[0][1] + frustum_matrix[0][2]    * frustum_matrix[0][2] );
+    
     frustum_matrix[0][0] /= t;
     frustum_matrix[0][1] /= t;
     frustum_matrix[0][2] /= t;
     frustum_matrix[0][3] /= t;
+    
     /* Extract the numbers for the LEFT plane */
     frustum_matrix[1][0] = clip_matrix[0][3] + clip_matrix[0][0];
     frustum_matrix[1][1] = clip_matrix[1][3] + clip_matrix[1][0];
     frustum_matrix[1][2] = clip_matrix[2][3] + clip_matrix[2][0];
     frustum_matrix[1][3] = clip_matrix[3][3] + clip_matrix[3][0];
+    
     /* Normalize the result */
     t = sqrt( frustum_matrix[1][0] * frustum_matrix[1][0] + frustum_matrix[1][1] * frustum_matrix[1][1] + frustum_matrix[1][2]    * frustum_matrix[1][2] );
+    
     frustum_matrix[1][0] /= t;
     frustum_matrix[1][1] /= t;
     frustum_matrix[1][2] /= t;
     frustum_matrix[1][3] /= t;
+    
     /* Extract the BOTTOM plane */
     frustum_matrix[2][0] = clip_matrix[0][3] + clip_matrix[0][1];
     frustum_matrix[2][1] = clip_matrix[1][3] + clip_matrix[1][1];
     frustum_matrix[2][2] = clip_matrix[2][3] + clip_matrix[2][1];
     frustum_matrix[2][3] = clip_matrix[3][3] + clip_matrix[3][1];
+    
     /* Normalize the result */
     t = sqrt( frustum_matrix[2][0] * frustum_matrix[2][0] + frustum_matrix[2][1] * frustum_matrix[2][1] + frustum_matrix[2][2]    * frustum_matrix[2][2] );
+    
     frustum_matrix[2][0] /= t;
     frustum_matrix[2][1] /= t;
     frustum_matrix[2][2] /= t;
     frustum_matrix[2][3] /= t;
+    
     /* Extract the TOP plane */
     frustum_matrix[3][0] = clip_matrix[0][3] - clip_matrix[0][1];
     frustum_matrix[3][1] = clip_matrix[1][3] - clip_matrix[1][1];
@@ -542,28 +570,13 @@ bool canvashdl::clip_frustum(vec3f v)
     frustum_matrix[5][1] /= t;
     frustum_matrix[5][2] /= t;
     frustum_matrix[5][3] /= t;
-    float x = v[0];
-    float y = v[1];
-    float z = v[2];
-    int p;
-    for( p = 0; p < 6; p++ )
-        if( frustum_matrix[p][0] * x + frustum_matrix[p][1] * y + frustum_matrix[p][2] * z + frustum_matrix[p][3]    <= 0 )
-            return false;
-    return true;
-    //return v;
+    
+    return frustum_matrix;
 }
 
 
 
-int canvashdl::sign(int x){
-    if(x<0){
-        return -1;
-    }
-    else if(x>0){
-        return 1;
-    }
-    return 0;
-}
+
 /* plot_half_triangle
  *
  * Plot half of a triangle defined by three points in window coordinates (v1, v2, v3).
@@ -588,6 +601,18 @@ void canvashdl::plot_triangle(vec8f v1, vec8f v2, vec8f v3)
      * triangle as 3 points or 3 lines.
      */
     
+    if(polygon_mode == point)
+    {
+        plot_point(v1);
+        plot_point(v2);
+        plot_point(v3);
+    }
+    else
+    {
+        plot_line(v1, v2);
+        plot_line(v2, v3);
+        plot_line(v3, v1);
+    }
     
     
     // TODO Assignment 2: Add in the fill polygon mode.
@@ -618,19 +643,22 @@ void canvashdl::draw_points(const vector<vec8f> &geometry)
 void canvashdl::draw_lines(const vector<vec8f> &geometry, const vector<int> &indices)
 {
     // TODO Assignment 1: Clip the lines against the frustum, call the vertex shader, and then draw them.
-    frustumhdl test;
-    cout << test.back;
+
+    if(indices.size() < 2 || indices.size()%2 != 0)
+    {
+        cout << "Error drawing lines." << endl;
+    }
+    else
+    {
+        for(int i = 0; i < indices.size(); i+= 2)
+        {
+            vec8f point1 = shade_vertex(geometry[indices[i]]);
+            vec8f point2 = shade_vertex(geometry[indices[i+1]]);
+            plot_line(point1, point2);
+        }
+    }
     
-    //for(int i = 0; i < geometry.size(); ++i)
-    //{
-        //We receive the points in window coordinates and apply the transformations
-        vec8f point1 = shade_vertex(geometry[0]);
-        vec8f point2 = shade_vertex(geometry[1]);
-        point1 = clip_frustum(point1);
-        point2 = clip_frustum(point2);
-        //Plot the point
-        plot_line(point1, point2);
-    //}
+    
 }
 
 /* Draw a set of 3D triangles on the canvas. Each point in geometry is
@@ -646,9 +674,20 @@ void canvashdl::draw_triangles(const vector<vec8f> &geometry, const vector<int> 
      * culling, and then draw the remaining triangles.
      */
     
-    
-    
-    
+    if(indices.size() < 3 || indices.size()%3 != 0)
+    {
+        cout << "Error drawing triangles." << endl;
+    }
+    else
+    {
+        for(int i = 0; i < indices.size()-2; i+= 3)
+        {
+            vec8f point1 = shade_vertex(geometry[indices[i]]);
+            vec8f point2 = shade_vertex(geometry[indices[i+1]]);
+            vec8f point3 = shade_vertex(geometry[indices[i+2]]);
+            plot_triangle(point1, point2, point3);
+        }
+    }
 
 }
 

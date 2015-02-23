@@ -46,6 +46,8 @@ private:
     void plot_triangle(vec8f v1, vec8f v2, vec8f v3);
     int sign(int x);
     
+    mat4f clip_frustum();
+    
 public:
     canvashdl(int w, int h);
     ~canvashdl();
@@ -83,7 +85,7 @@ public:
     vec3f to_window(vec2i pixel);
     vec2i to_pixel(vec3f window);
     vec3f unproject(vec3f window);
-    bool clip_frustum(vec3f v);
+    
       
     // Drawing and Shading
     enum

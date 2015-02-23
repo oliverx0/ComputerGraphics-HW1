@@ -3,7 +3,7 @@
 
 camerahdl::camerahdl()
 {
-	position = vec3f(0.0, 0.0, 0.0);
+	position = vec3f(0.0, 0.0, -10.0);
 	orientation = vec3f(0.0, 0.0, 0.0);
 	model = NULL;
 	type = "camera";
@@ -22,12 +22,33 @@ void camerahdl::view(canvashdl *canvas)
 	 * the camera into place.
 	 */
     
-    //Restart Canvas Projection
-    canvas->active_matrix = canvashdl::projection_matrix;
+    //Restart Canvas ModelView
+    canvas->active_matrix = canvashdl::modelview_matrix;
     canvas->load_identity();
     
-    //Project according to the type of camera
-    project(canvas);
+    //Apply translation
+    canvas->translate(-position);
+    
+    //Apply rotation
+    vec3f x;
+    x[0] = 1;
+    x[1] = 0;
+    x[2] = 0;
+    
+    vec3f y;
+    y[0] = 0;
+    y[1] = 1;
+    y[2] = 0;
+    
+    vec3f z;
+    z[0] = 0;
+    z[1] = 0;
+    z[2] = 1;
+    
+    canvas->rotate(-orientation[0], x);
+    canvas->rotate(-orientation[1], y);
+    canvas->rotate(-orientation[2], z);
+    
 }
 
 orthohdl::orthohdl()
@@ -48,6 +69,10 @@ orthohdl::~orthohdl()
 void orthohdl::project(canvashdl *canvas)
 {
 	// TODO Assignment 1: Use the canvashdl::ortho function to set up an orthographic projection
+    
+    //Restart Canvas Projection
+    canvas->active_matrix = canvashdl::projection_matrix;
+    canvas->load_identity();
     canvas->ortho(left, right, bottom, top, front, back);
 }
 
@@ -70,6 +95,9 @@ frustumhdl::~frustumhdl()
 void frustumhdl::project(canvashdl *canvas)
 {
 	// TODO Assignment 1: Use the canvashdl::frustum function to set up a perspective projection
+    //Restart Canvas Projection
+    canvas->active_matrix = canvashdl::projection_matrix;
+    canvas->load_identity();
     canvas->frustum(left, right, bottom, top, front, back);
 }
 
@@ -90,5 +118,9 @@ perspectivehdl::~perspectivehdl()
 void perspectivehdl::project(canvashdl *canvas)
 {
 	// TODO Assignment 1: Use the canvashdl::perspective function to set up a perspective projection
+    
+    //Restart Canvas Projection
+    canvas->active_matrix = canvashdl::projection_matrix;
+    canvas->load_identity();
     canvas->perspective(fovy, aspect, front, back);
 }
